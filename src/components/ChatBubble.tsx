@@ -15,7 +15,7 @@ export default function ChatBubble({
   const isPip = message.sender === 'pip';
 
   return (
-    <div className={`flex gap-3 mb-4 animate-slide-in-up ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`flex gap-3 mb-4 ${isUser ? 'flex-row-reverse animate-message-in-right' : 'flex-row animate-message-in-left'}`}>
       {/* Avatar */}
       {showAvatar && (
         <div className="flex-shrink-0">
@@ -43,16 +43,15 @@ export default function ChatBubble({
               ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md'
               : 'bg-white text-gray-800 border border-gray-200 rounded-bl-md'
             }
-            ${isTyping ? 'animate-pulse' : ''}
           `}
         >
           {/* Typing indicator */}
           {isTyping ? (
             <div className="flex gap-1 items-center py-1">
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              <span className="ml-2 text-gray-500 text-sm">Pip is thinking...</span>
+              <div className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '200ms' }} />
+              <div className="w-2 h-2 bg-gray-400 rounded-full typing-dot" style={{ animationDelay: '400ms' }} />
+              <span className="ml-2 text-gray-500 text-sm">Pip is thinking…</span>
             </div>
           ) : (
             <>

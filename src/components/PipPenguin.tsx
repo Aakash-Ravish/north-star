@@ -263,13 +263,14 @@ export default function PipPenguin({
   const bounceTransform = bodyBounce > 0 ? `translateY(-${bodyBounce * 10}px)` : 'translateY(0)';
   const wiggleTransform = isWiggling ? 'rotate(3deg)' : 'rotate(0deg)';
   const breatheDuration = mood === 'calm' ? '6s' : '4.5s';
-  const idleAnimClass = mood === 'playful' ? 'animate-float' : 'animate-bob';
+
+  // Hover "pop": a gentle spring scale lives on the <svg> (the wrapper div's
+  // transform is owned by the bob/float keyframe, so scaling there is a no-op).
+  const hoverScale = isHovered ? 1.08 : 1;
 
   return (
     <div
-      className={`${baseClasses} select-none transition-transform duration-300 ${
-        isHovered ? 'scale-110' : 'scale-100'
-      } ${isHovered && !reducedMotion ? 'animate-wiggle' : ''} ${reducedMotion ? '' : idleAnimClass}`}
+      className={`${baseClasses} select-none`}
       onMouseEnter={() => {
         setIsHovered(true);
         if (reducedMotion) return;
@@ -284,10 +285,11 @@ export default function PipPenguin({
     >
       <svg
         viewBox="0 0 200 240"
-        className="w-full h-full drop-shadow-lg transition-all duration-300"
+        className="w-full h-full drop-shadow-lg"
         style={{
           filter: `drop-shadow(0 ${isHovered ? 12 : 6}px ${isHovered ? 30 : 20}px rgba(0, 0, 0, ${isHovered ? 0.3 : 0.15}))`,
-          transform: `rotate(${headTilt}deg)`
+          transform: `rotate(${headTilt}deg) scale(${hoverScale})`,
+          transition: 'transform 0.35s var(--ease-spring), filter 0.3s var(--ease-soft)',
         }}
       >
         {/* Breathing wrapper — CSS-driven scale around the body center */}
