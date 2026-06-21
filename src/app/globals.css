@@ -1,0 +1,502 @@
+@import "tailwindcss";
+
+:root {
+  /* North Star Brand Colors */
+  --primary: #378ADD;
+  --primary-light: #5BA4E8;
+  --primary-dark: #2A6AB8;
+
+  /* Mood Colors */
+  --positive: #4ADE80;
+  --positive-light: #86EFAC;
+  --positive-dark: #22C55E;
+
+  --playful: #FDE047;
+  --playful-light: #FEF08A;
+  --playful-dark: #EAB308;
+
+  --calm: #A78BFA;
+  --calm-light: #C4B5FD;
+  --calm-dark: #8B5CF6;
+
+  /* Pip Mood Colors */
+  --mood-happy: #4ADE80;
+  --mood-sad: #60A5FA;
+  --mood-calm: #A78BFA;
+  --mood-playful: #FDE047;
+  --mood-concerned: #C084FC;
+
+  /* Neutrals */
+  --background: #FEFEFE;
+  --surface: #FFFFFF;
+  --surface-secondary: #F8FAFC;
+  --border: #E2E8F0;
+  --text: #1E293B;
+  --text-secondary: #64748B;   /* ~4.6:1 on white — passes WCAG AA */
+  --text-muted: #6B7280;       /* darkened from #94A3B8 (2.6:1, failed AA) to ~4.8:1 */
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-light));
+  --gradient-positive: linear-gradient(135deg, var(--positive), var(--positive-light));
+  --gradient-playful: linear-gradient(135deg, var(--playful), var(--playful-light));
+
+  /* Motion easing tokens — tuned curves instead of generic ease-in-out.
+     soft   = gentle deceleration (easeOutQuint), reads natural and calm
+     spring = slight overshoot, gives playful elements a lively "pop"
+     smooth = symmetric in/out for looping idle motion */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@theme inline {
+  /* Custom color palette */
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+
+  --color-positive: var(--positive);
+  --color-positive-light: var(--positive-light);
+  --color-positive-dark: var(--positive-dark);
+
+  --color-playful: var(--playful);
+  --color-playful-light: var(--playful-light);
+  --color-playful-dark: var(--playful-dark);
+
+  --color-calm: var(--calm);
+  --color-calm-light: var(--calm-light);
+  --color-calm-dark: var(--calm-dark);
+
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-border: var(--border);
+
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Default transition timing for interactive state changes.
+   NOTE: scoped to common interactive properties rather than `all` — animating
+   every property on every element is a known performance/jank anti-pattern. */
+* {
+  transition-property: color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter;
+  transition-duration: 200ms;
+  transition-timing-function: var(--ease-soft);
+}
+
+/* Custom animations */
+@keyframes bob {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Pip's breathing — driven by CSS (compositor) instead of per-frame React
+   state, so multiple Pips stay at 60fps. Gentle 4% scale around the body. */
+@keyframes pip-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(1deg); }
+  50% { transform: translateY(-12px) rotate(0deg); }
+  75% { transform: translateY(-6px) rotate(-1deg); }
+}
+
+@keyframes blink {
+  0%, 90%, 100% { opacity: 1; }
+  95% { opacity: 0; }
+}
+
+@keyframes pulse-gentle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes button-press {
+  0% { transform: scale(1) translateY(0); }
+  50% { transform: scale(0.95) translateY(1px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes button-hover {
+  0% { transform: scale(1) translateY(0); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+  100% { transform: scale(1.05) translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(2deg); }
+  75% { transform: rotate(-2deg); }
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes button-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px rgba(55, 138, 221, 0.15);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 15px 35px rgba(55, 138, 221, 0.25);
+  }
+}
+
+@keyframes button-glow {
+  0%, 100% {
+    box-shadow: 0 10px 25px rgba(55, 138, 221, 0.15), 0 0 0 0 rgba(55, 138, 221, 0.4);
+  }
+  50% {
+    box-shadow: 0 10px 25px rgba(55, 138, 221, 0.25), 0 0 20px 5px rgba(55, 138, 221, 0.2);
+  }
+}
+
+@keyframes button-pulse-gentle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.9;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mouth-talk {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.5); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes eye-droop {
+  from { transform: translateY(0) scaleY(1); }
+  to { transform: translateY(2px) scaleY(0.8); }
+}
+
+@keyframes eye-widen {
+  from { transform: scale(1); }
+  to { transform: scale(1.3); }
+}
+
+@keyframes eyebrow-furrow {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(-2px) rotate(-5deg); }
+}
+
+/* Utility classes for animations */
+.animate-bob {
+  animation: bob 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-blink {
+  animation: blink 4s ease-in-out infinite;
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+
+.animate-button-breathe {
+  animation: button-breathe 3s ease-in-out infinite;
+}
+
+.animate-button-glow {
+  animation: button-glow 3s ease-in-out infinite;
+}
+
+.animate-button-pulse {
+  animation: button-pulse-gentle 2s ease-in-out infinite;
+}
+
+/* Special attention-getting button styles */
+.btn-attention {
+  animation: button-pulse-gentle 2s ease-in-out infinite, button-glow 4s ease-in-out infinite;
+}
+
+.btn-call-to-action {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-call-to-action::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: rotate(45deg);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Floating button for important CTAs */
+.btn-floating {
+  animation: float 6s ease-in-out infinite, button-glow 4s ease-in-out infinite;
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.5s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-mouth-talk {
+  animation: mouth-talk 0.3s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-eye-droop {
+  animation: eye-droop 0.3s ease-out forwards;
+}
+
+.animate-eye-widen {
+  animation: eye-widen 0.3s ease-out forwards;
+}
+
+.animate-eyebrow-furrow {
+  animation: eyebrow-furrow 0.3s ease-out forwards;
+}
+
+/* Enhanced button styles with idle animations */
+.btn-primary {
+  @apply bg-[--primary] text-white px-6 py-3 rounded-xl font-medium;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+
+  /* Idle breathing animation */
+  animation: button-breathe 3s ease-in-out infinite;
+
+  /* Shimmer effect background */
+  background: linear-gradient(135deg, var(--primary), var(--primary-light), var(--primary));
+  background-size: 200% 100%;
+  background-animation: shimmer 4s ease-in-out infinite;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  animation: button-hover 0.3s ease-out forwards, button-glow 2s ease-in-out infinite;
+  box-shadow: 0 20px 40px rgba(55, 138, 221, 0.4);
+}
+
+.btn-primary:active {
+  animation: button-press 0.2s ease-out;
+}
+
+/* Glowing ripple effect */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Idle glow effect */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+  border-radius: inherit;
+  z-index: -1;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.btn-secondary {
+  @apply bg-white text-[--primary] px-6 py-3 rounded-xl font-medium border border-[--border];
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+
+  /* Idle gentle pulse animation */
+  animation: button-pulse-gentle 4s ease-in-out infinite;
+
+  /* Subtle initial shadow */
+  box-shadow: 0 8px 20px rgba(55, 138, 221, 0.1);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-secondary);
+  animation: button-hover 0.3s ease-out forwards;
+  box-shadow: 0 20px 40px rgba(55, 138, 221, 0.2);
+  border-color: var(--primary);
+}
+
+.btn-secondary:active {
+  animation: button-press 0.2s ease-out;
+}
+
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: var(--primary);
+  opacity: 0.1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-secondary:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Border glow animation for secondary buttons */
+.btn-secondary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(45deg, var(--primary), transparent, var(--primary));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: exclude;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: shimmer 5s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white rounded-2xl p-6 shadow-lg border border-[--border];
+}
+
+.card-elevated {
+  @apply bg-white rounded-2xl p-6 shadow-xl border border-[--border];
+}
+
+/* Chat bubble styles */
+.chat-bubble-user {
+  @apply bg-[--primary] text-white rounded-2xl rounded-br-md px-4 py-3 max-w-xs ml-auto shadow-md;
+}
+
+.chat-bubble-pip {
+  @apply bg-white text-[--text] rounded-2xl rounded-bl-md px-4 py-3 max-w-xs mr-auto shadow-md border border-[--border];
+}
+
+/* Pip breathing utility. Duration is set per-instance via --pip-breathe-duration
+   (calm Pip breathes slower) and the origin is the body center in SVG space. */
+.pip-breathe {
+  transform-origin: 100px 140px;
+  animation: pip-breathe var(--pip-breathe-duration, 5s) var(--ease-smooth) infinite;
+}
+
+/* Respect the user's reduced-motion preference (WCAG 2.1 SC 2.3.3).
+   We don't strip ALL motion — opacity fades and tiny scale feedback are fine and
+   help orientation — but we kill looping/large-movement animation that can cause
+   vestibular discomfort (bob, float, breathe, wiggle, shimmer, ping, etc.) and
+   collapse long transitions to near-instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-bob,
+  .animate-float,
+  .animate-pulse-gentle,
+  .animate-wiggle,
+  .animate-button-breathe,
+  .animate-button-glow,
+  .animate-button-pulse,
+  .btn-attention,
+  .btn-floating,
+  .pip-breathe,
+  .animate-glow-pulse,
+  .animate-mouth-talk {
+    animation: none !important;
+    transform: none !important;
+  }
+  /* SMIL animations (sparkles, tears, hearts) are gated in PipPenguin.tsx via
+     the useReducedMotion hook, since CSS can't reliably stop <animate>. */
+}

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/chat",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "northstar_user",
+          "value": "(?<user>.*)"
+        }
+      ],
+      "destination": "/chat",
+      "permanent": false
+    }
+  ]
+}

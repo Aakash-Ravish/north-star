@@ -1,0 +1,462 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import PipPenguin from '@/components/PipPenguin';
+import { User, AppSettings, PipTone } from '@/types';
+import { loadFromStorage, saveToStorage, getPipResponse } from '@/utils';
+
+export default function AdminPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [exportData, setExportData] = useState<string>('');
+
+  const ADMIN_PASSWORD = 'northstar123'; // In a real app, this would be properly secured
+
+  useEffect(() => {
+    const userData = loadFromStorage<User | null>('northstar_user', null);
+    if (!userData) {
+      router.push('/onboarding');
+      return;
+    }
+
+    setUser(userData);
+
+    const settingsData = loadFromStorage<AppSettings>('northstar_settings', {
+      darkMode: false,
+      notifications: true,
+      voice: {
+        enabled: true,
+        autoPlay: false,
+        speed: 1,
+        volume: 0.7
+      },
+      pipPersonality: userData.preferredTone || 'cheerful'
+    });
+
+    setSettings(settingsData);
+  }, [router]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setPassword('');
+    } else {
+      alert('Incorrect password!');
+      setPassword('');
+    }
+  };
+
+  const updateSetting = (key: keyof AppSettings, value: any) => {
+    if (!settings) return;
+
+    const updatedSettings = { ...settings, [key]: value };
+    setSettings(updatedSettings);
+    saveToStorage('northstar_settings', updatedSettings);
+  };
+
+  const updateVoiceSetting = (key: keyof AppSettings['voice'], value: any) => {
+    if (!settings) return;
+
+    const updatedSettings = {
+      ...settings,
+      voice: { ...settings.voice, [key]: value }
+    };
+    setSettings(updatedSettings);
+    saveToStorage('northstar_settings', updatedSettings);
+  };
+
+  const updateUserTone = (tone: PipTone) => {
+    if (!user) return;
+
+    const updatedUser = { ...user, preferredTone: tone };
+    setUser(updatedUser);
+    saveToStorage('northstar_user', updatedUser);
+    updateSetting('pipPersonality', tone);
+  };
+
+  const handleExportData = () => {
+    if (!user) return;
+
+    const userData = loadFromStorage('northstar_user', null);
+    const chatData = loadFromStorage(`northstar_chat_${user.id}`, []);
+    const moodData = loadFromStorage(`northstar_moods_${user.id}`, []);
+    const streakData = loadFromStorage(`northstar_streak_${user.id}`, {});
+    const settingsData = loadFromStorage('northstar_settings', {});
+
+    const exportObject = {
+      exported: new Date().toISOString(),
+      user: userData,
+      chat: chatData,
+      moods: moodData,
+      streak: streakData,
+      settings: settingsData
+    };
+
+    const dataStr = JSON.stringify(exportObject, null, 2);
+    setExportData(dataStr);
+
+    // Download as file
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `northstar-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteAllData = () => {
+    if (!user) return;
+
+    // Remove all stored data
+    localStorage.removeItem('northstar_user');
+    localStorage.removeItem(`northstar_chat_${user.id}`);
+    localStorage.removeItem(`northstar_moods_${user.id}`);
+    localStorage.removeItem(`northstar_streak_${user.id}`);
+    localStorage.removeItem('northstar_settings');
+
+    // Redirect to home
+    router.push('/');
+  };
+
+  if (!user || !settings) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="card-elevated p-8 text-center">
+            <PipPenguin size="lg" mood="calm" className="mb-6 mx-auto" />
+
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Admin Access</h1>
+            <p className="text-gray-600 mb-8">
+              This area contains sensitive settings. Please enter the admin password.
+            </p>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter admin password"
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-center"
+                autoFocus
+              />
+
+              <button type="submit" className="w-full btn-primary">
+                Access Admin Panel
+              </button>
+            </form>
+
+            <div className="mt-6">
+              <button
+                onClick={() => router.push('/chat')}
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Back to Chat
+              </button>
+            </div>
+
+            <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-xs text-yellow-700">
+                <strong>Demo password:</strong> northstar123
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/chat')}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <div className="flex items-center gap-3">
+                <PipPenguin size="sm" mood="happy" />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Admin Settings</h1>
+                  <p className="text-gray-600">Manage your North Star experience</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsAuthenticated(false)}
+              className="btn-secondary text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+
+        {/* User Profile Settings */}
+        <div className="card p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">Profile Settings</h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Name
+              </label>
+              <input
+                type="text"
+                value={user.name}
+                onChange={(e) => {
+                  const updatedUser = { ...user, name: e.target.value };
+                  setUser(updatedUser);
+                  saveToStorage('northstar_user', updatedUser);
+                }}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Pip's Personality
+              </label>
+              <select
+                value={user.preferredTone}
+                onChange={(e) => updateUserTone(e.target.value as PipTone)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="cheerful">Cheerful & Upbeat</option>
+                <option value="calm">Calm & Peaceful</option>
+                <option value="supportive">Supportive & Caring</option>
+                <option value="playful">Playful & Fun</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-700 italic">
+              "{getPipResponse(user.preferredTone, 'greeting')}"
+            </p>
+          </div>
+        </div>
+
+        {/* App Settings */}
+        <div className="card p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">App Settings</h2>
+
+          <div className="space-y-6">
+            {/* Notifications */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h3 className="font-medium text-gray-800">Push Notifications</h3>
+                <p className="text-sm text-gray-600">Receive reminders and encouragement</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.notifications}
+                  onChange={(e) => updateSetting('notifications', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            {/* Dark Mode */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h3 className="font-medium text-gray-800">Dark Mode</h3>
+                <p className="text-sm text-gray-600">Switch to dark theme (coming soon)</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.darkMode}
+                  onChange={(e) => updateSetting('darkMode', e.target.checked)}
+                  disabled
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full opacity-50 cursor-not-allowed"></div>
+              </label>
+            </div>
+
+            {/* Voice Settings */}
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-medium text-gray-800 mb-4">Voice Settings</h3>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">Voice Messages Enabled</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.voice.enabled}
+                      onChange={(e) => updateVoiceSetting('enabled', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-700 mb-2">
+                    Playback Speed: {settings.voice.speed}x
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2"
+                    step="0.1"
+                    value={settings.voice.speed}
+                    onChange={(e) => updateVoiceSetting('speed', parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-700 mb-2">
+                    Volume: {Math.round(settings.voice.volume * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={settings.voice.volume}
+                    onChange={(e) => updateVoiceSetting('volume', parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Data Management */}
+        <div className="card p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">Data Management</h2>
+
+          <div className="space-y-4">
+            <div className="p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium text-gray-800">Export Data</h3>
+                <button
+                  onClick={handleExportData}
+                  className="btn-secondary"
+                >
+                  Download JSON
+                </button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Download all your North Star data including conversations, mood entries, and settings.
+              </p>
+            </div>
+
+            <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium text-red-800">Delete All Data</h3>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="btn-secondary text-red-600 border-red-300 hover:bg-red-100"
+                >
+                  Delete
+                </button>
+              </div>
+              <p className="text-sm text-red-600">
+                Permanently remove all your data from this device. This action cannot be undone.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* App Info */}
+        <div className="card p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">App Information</h2>
+
+          <div className="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <h3 className="font-medium text-gray-800 mb-2">Version</h3>
+              <p className="text-gray-600">North Star v1.0.0</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-gray-800 mb-2">Data Storage</h3>
+              <p className="text-gray-600">Local device only (private)</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-gray-800 mb-2">Created</h3>
+              <p className="text-gray-600">{new Date(user.createdAt).toLocaleDateString()}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-gray-800 mb-2">Last Active</h3>
+              <p className="text-gray-600">{new Date(user.lastActive).toLocaleDateString()}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Delete confirmation modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full animate-slide-in-up">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  Delete All Data?
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  This will permanently remove all your conversations, mood entries, settings, and progress. This action cannot be undone.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAllData}
+                  className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                >
+                  Delete Everything
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
