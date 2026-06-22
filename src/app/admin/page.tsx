@@ -16,7 +16,7 @@ export default function AdminPage() {
   const [exportData, setExportData] = useState<string>('');
   const [pushSupported, setPushSupported] = useState(false);
 
-  const ADMIN_PASSWORD = 'northstar123'; // In a real app, this would be properly secured
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'northstar123';
 
   useEffect(() => {
     // Check if push notifications are supported
@@ -269,11 +269,13 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <p className="text-xs text-yellow-700">
-                <strong>Demo password:</strong> northstar123
-              </p>
-            </div>
+            {process.env.NEXT_PUBLIC_ADMIN_PASSWORD === undefined && (
+              <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-xs text-yellow-700">
+                  <strong>Demo password:</strong> northstar123
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
