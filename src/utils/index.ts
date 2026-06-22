@@ -482,7 +482,7 @@ export type { SpeechOptions };
 
 // Voice settings utilities
 export const getVoiceSettings = () => {
-  return loadFromStorage('northstar_voice_enabled', true);
+  return loadFromStorage('northstar_voice_enabled', false);
 };
 
 export const setVoiceSettings = (enabled: boolean) => {

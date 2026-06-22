@@ -808,13 +808,6 @@ export default function ChatPage() {
           {/* Quick actions */}
           <div className="space-y-3 mb-6">
             <button
-              onClick={() => setShowMoodPicker(true)}
-              className="w-full btn-secondary text-left p-3 rounded-lg"
-            >
-              📊 Check your mood
-            </button>
-
-            <button
               onClick={() => router.push('/activities')}
               className="w-full btn-secondary text-left p-3 rounded-lg"
             >
@@ -826,6 +819,13 @@ export default function ChatPage() {
               className="w-full btn-secondary text-left p-3 rounded-lg"
             >
               📖 View journal
+            </button>
+
+            <button
+              onClick={() => setShowMoodPicker(true)}
+              className="w-full btn-secondary text-left p-3 rounded-lg"
+            >
+              📊 Check your mood
             </button>
 
             <button
