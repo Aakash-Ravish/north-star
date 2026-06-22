@@ -206,7 +206,7 @@ function Landing() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-blue-50/40 flex flex-col">
 
       {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-16 pb-8 text-center">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-10 pb-8 text-center">
 
         {/* Pip */}
         <div className={`transition-all duration-700 ${step >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
