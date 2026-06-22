@@ -808,6 +808,13 @@ export default function ChatPage() {
           {/* Quick actions */}
           <div className="space-y-3 mb-6">
             <button
+              onClick={() => router.push('/insights')}
+              className="w-full btn-secondary text-left p-3 rounded-lg"
+            >
+              ✨ Your insights
+            </button>
+
+            <button
               onClick={() => router.push('/activities')}
               className="w-full btn-secondary text-left p-3 rounded-lg"
             >
