@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import UmamiAnalytics from "@/components/analytics/UmamiAnalytics";
@@ -26,19 +26,20 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-  themeColor: "#378ADD",
   manifest: "/manifest.json",
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
     apple: "/icon.svg",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#378ADD",
 };
 
 export default function RootLayout({

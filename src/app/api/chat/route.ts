@@ -183,15 +183,34 @@ export async function POST(request: NextRequest) {
     // Create dynamic system prompt based on user memory
     const systemPrompt = createSystemPrompt(userMemory);
 
+    // Normalize the conversation for the Anthropic API.
+    // The client sends messages shaped { role, content } (see chat/page.tsx),
+    // so read `role` (not `sender`). Anthropic also requires the conversation to
+    // begin with a user turn, so drop any leading assistant messages (e.g. Pip's
+    // opening greeting) — otherwise the API rejects the request.
+    const apiMessages: { role: 'user' | 'assistant'; content: string }[] = messages
+      .map((msg: any) => ({
+        role: (msg.role === 'user' || msg.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+        content: msg.content as string,
+      }))
+      .filter((m: { content?: string }) => Boolean(m.content && m.content.trim()));
+    while (apiMessages.length > 0 && apiMessages[0].role !== 'user') {
+      apiMessages.shift();
+    }
+
+    if (apiMessages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'No user message to respond to.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create the stream
     const stream = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 200, // Slightly increased for more natural responses
       system: systemPrompt,
-      messages: messages.map((msg: any) => ({
-        role: msg.sender === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      })),
+      messages: apiMessages,
       stream: true,
     });
 
